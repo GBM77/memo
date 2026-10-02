@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    font-family: 'Noto Sans TC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* High Contrast Senior Mode */
+[data-theme="highContrast"] {
+  background-color: #09090b !important;
+  color: #fef08a !important;
+}
+
+[data-theme="highContrast"] .bg-white {
+  background-color: #18181b !important;
+  color: #fef08a !important;
+  border-color: #ca8a04 !important;
+}
+
+[data-theme="highContrast"] .bg-slate-50 {
+  background-color: #09090b !important;
+  color: #fef08a !important;
+}
+
+[data-theme="highContrast"] .text-slate-900,
+[data-theme="highContrast"] .text-slate-800,
+[data-theme="highContrast"] .text-slate-700 {
+  color: #fef08a !important;
+}
+
+[data-theme="highContrast"] .text-slate-600,
+[data-theme="highContrast"] .text-slate-500 {
+  color: #fde047 !important;
+}
+
+[data-theme="highContrast"] .border-slate-200,
+[data-theme="highContrast"] .border-slate-100 {
+  border-color: #854d0e !important;
+}
+
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  header, nav, button, .print\:hidden {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "安時備忘 - 就診與服藥日常提醒",
+  "description": "一眼看懂現在該做的事：精準就診出發倒數、防呆服藥打卡與防重複機制、日常瑣事追蹤與個人化自訂備忘。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
