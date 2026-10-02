@@ -124,11 +124,15 @@ export interface AlarmSettings {
   snoozeMinutes: number;
 }
 
+export type DefaultPageSetting = 'home' | 'appointments' | 'medications' | 'todos' | 'settings';
+
 export interface AppSettings {
+  isSeniorMode: boolean; // 長輩專用版模式（超大字體、超大按鈕、親切語音朗讀、最簡化防呆操作）
   fontSize: FontSizeSetting;
   themeColor: ThemeColor;
   layoutStyle: LayoutStyle;
   forceMobileView: boolean; // 強制手機版寬度居中便於閱讀
+  defaultLandingPage?: DefaultPageSetting; // 電腦版預設啟動/獨立頁面
   alarm: AlarmSettings;
   lowStockThresholdDays: number; // 低於幾天提醒領藥，預設 7
   defaultTransportMode: TransportMode;

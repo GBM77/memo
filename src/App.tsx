@@ -31,6 +31,7 @@ import { AppointmentList } from './components/appointments/AppointmentList';
 import { MedicationList } from './components/medications/MedicationList';
 import { TodoList } from './components/todos/TodoList';
 import { SettingsView } from './components/settings/SettingsView';
+import { SeniorView } from './components/senior/SeniorView';
 import { Toast } from './components/common/Toast';
 import { PhoneDialModal } from './components/common/PhoneDialModal';
 import { HoldToConfirmModal } from './components/medications/HoldToConfirmModal';
@@ -44,7 +45,6 @@ import { Smartphone } from 'lucide-react';
 
 export default function App() {
   const [now, setNow] = useState<Date>(getNowTaipei());
-  const [currentTab, setCurrentTab] = useState<TabType>('home');
 
   // Core Data
   const [appointments, setAppointments] = useState<Appointment[]>(loadAppointments);
@@ -52,6 +52,38 @@ export default function App() {
   const [doseLogs, setDoseLogs] = useState<DoseLog[]>(loadDoseLogs);
   const [todos, setTodos] = useState<TodoItem[]>(loadTodos);
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
+
+  // Initialize currentTab from URL hash or defaultLandingPage
+  const [currentTab, setCurrentTab] = useState<TabType>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '');
+      if (['home', 'appointments', 'medications', 'todos', 'settings'].includes(hash)) {
+        return hash as TabType;
+      }
+    }
+    const saved = loadSettings();
+    return (saved.defaultLandingPage as TabType) || 'home';
+  });
+
+  const handleNavigateTab = useCallback((tab: TabType) => {
+    setCurrentTab(tab);
+    if (typeof window !== 'undefined') {
+      window.location.hash = tab;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+
+  // Listen to browser Back / Forward buttons (URL hashchange)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (['home', 'appointments', 'medications', 'todos', 'settings'].includes(hash)) {
+        setCurrentTab(hash as TabType);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // UI state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -181,7 +213,7 @@ export default function App() {
       showToast(`✓ 已記錄【${event.timeStr}】服藥打卡！`);
     } else if (event.type === 'departure' && event.payload) {
       setAppointmentDraft(event.payload);
-      setCurrentTab('appointments');
+      handleNavigateTab('appointments');
       showToast(`✓ 請確認攜帶物品與出發路線！`);
     }
   };
@@ -300,13 +332,13 @@ export default function App() {
         notes: `由 ${app.dateTime.split('T')[0]} 門診預約之複診`,
       };
       setAppointmentDraft(followUpDraft);
-      setCurrentTab('appointments');
+      handleNavigateTab('appointments');
     }
   };
 
   const handleCreateAppointmentDraft = (draft: Partial<Appointment>) => {
     setAppointmentDraft(draft);
-    setCurrentTab('appointments');
+    handleNavigateTab('appointments');
   };
 
   // --- MEDICATIONS HANDLERS ---
@@ -521,8 +553,11 @@ export default function App() {
   const pendingDoseCount = medications.filter((m) => m.isActive).length;
   const pendingTodosCount = todos.filter((t) => !t.isCompleted && isSameDay(t.dueDate, now)).length;
 
-  // Font size class
+  // Font size class: when in mobile view (forceMobileView), maximize font size to the fullest!
   const getFontSizeClass = () => {
+    if (settings.forceMobileView) {
+      return 'text-lg sm:text-xl font-medium leading-relaxed tracking-tight';
+    }
     switch (settings.fontSize) {
       case 'large':
         return 'text-[17px]';
@@ -546,49 +581,84 @@ export default function App() {
         onShowToast={showToast}
       />
 
-      {/* Main Container */}
-      <main className={`flex-1 w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 ${isMobileSim ? 'pb-24 max-w-md' : 'md:pb-12 max-w-4xl'}`}>
+      {/* Global Navigation (Desktop Top Sticky Bar / Mobile Bottom Fixed Bar) */}
+      <Navigation
+        currentTab={currentTab}
+        onChangeTab={handleNavigateTab}
+        upcomingAppointmentToday={upcomingAppointmentToday}
+        pendingDoseCount={pendingDoseCount}
+        pendingTodosCount={pendingTodosCount}
+        forceMobileView={isMobileSim}
+      />
+
+      {/* Main Container - Perfect fit for mobile with full-width optimization */}
+      <main className={`flex-1 w-full mx-auto px-2.5 sm:px-4 py-3 sm:py-5 pb-24 ${isMobileSim ? 'pb-24 max-w-[480px] w-full' : 'md:pb-12 max-w-4xl'}`}>
         {currentTab === 'home' && (
-          <HomeView
-            now={now}
-            appointments={appointments}
-            medications={medications}
-            doseLogs={doseLogs}
-            todos={todos}
-            settings={settings}
-            onNavigateToTab={(tab) => setCurrentTab(tab)}
-            onSelectAppointment={(app) => {
-              setAppointmentDraft(app);
-              setCurrentTab('appointments');
-            }}
-            onCreateAppointmentDraft={handleCreateAppointmentDraft}
-            onOpenPRNModal={() => setIsPRNModalOpen(true)}
-            onTakeSlot={handleTakeBatchSlot}
-            onSnoozeSlot={(slot, mins) => {
-              for (const m of slot.medications) {
-                if (m.status !== 'taken') handleSnoozeDose(m.med.id, slot.slotKey, mins);
-              }
-            }}
-            onSkipSlot={(slot) => {
-              for (const m of slot.medications) {
-                if (m.status !== 'taken') handleSkipDose(m.med.id, slot.slotKey);
-              }
-            }}
-            onOpenHoldConfirm={(med, slotKey, reasonMsg, lastTakenStr) => {
-              setHoldModalData({
-                isOpen: true,
-                med,
-                slotKey,
-                warningMessage: reasonMsg,
-                lastTakenTimeText: lastTakenStr,
-              });
-            }}
-            onToggleTodo={handleToggleTodo}
-            onToggleAppointmentItem={handleToggleAppointmentItem}
-            onCompleteAppointment={handleCompleteAppointment}
-            onShowToast={showToast}
-            onOpenScanModal={handleOpenScanModal}
-          />
+          settings.isSeniorMode ? (
+            <SeniorView
+              now={now}
+              appointments={appointments}
+              medications={medications}
+              doseLogs={doseLogs}
+              todos={todos}
+              settings={settings}
+              onExitSeniorMode={() => {
+                handleUpdateSettings({
+                  ...settings,
+                  isSeniorMode: false,
+                  fontSize: 'standard',
+                });
+                showToast('✓ 已切換回一般完整版模式！');
+              }}
+              onTakeSlot={handleTakeBatchSlot}
+              onOpenPRNModal={() => setIsPRNModalOpen(true)}
+              onOpenScanModal={handleOpenScanModal}
+              onOpenPhoneModal={() => setIsPhoneModalOpen(true)}
+              onToggleTodo={handleToggleTodo}
+              onShowToast={showToast}
+            />
+          ) : (
+            <HomeView
+              now={now}
+              appointments={appointments}
+              medications={medications}
+              doseLogs={doseLogs}
+              todos={todos}
+              settings={settings}
+              onNavigateToTab={handleNavigateTab}
+              onSelectAppointment={(app) => {
+                setAppointmentDraft(app);
+                handleNavigateTab('appointments');
+              }}
+              onCreateAppointmentDraft={handleCreateAppointmentDraft}
+              onOpenPRNModal={() => setIsPRNModalOpen(true)}
+              onTakeSlot={handleTakeBatchSlot}
+              onSnoozeSlot={(slot, mins) => {
+                for (const m of slot.medications) {
+                  if (m.status !== 'taken') handleSnoozeDose(m.med.id, slot.slotKey, mins);
+                }
+              }}
+              onSkipSlot={(slot) => {
+                for (const m of slot.medications) {
+                  if (m.status !== 'taken') handleSkipDose(m.med.id, slot.slotKey);
+                }
+              }}
+              onOpenHoldConfirm={(med, slotKey, reasonMsg, lastTakenStr) => {
+                setHoldModalData({
+                  isOpen: true,
+                  med,
+                  slotKey,
+                  warningMessage: reasonMsg,
+                  lastTakenTimeText: lastTakenStr,
+                });
+              }}
+              onToggleTodo={handleToggleTodo}
+              onToggleAppointmentItem={handleToggleAppointmentItem}
+              onCompleteAppointment={handleCompleteAppointment}
+              onShowToast={showToast}
+              onOpenScanModal={handleOpenScanModal}
+            />
+          )
         )}
 
         {currentTab === 'appointments' && (
@@ -648,22 +718,13 @@ export default function App() {
           />
         )}
       </main>
-
-      {/* Global Navigation */}
-      <Navigation
-        currentTab={currentTab}
-        onChangeTab={(tab) => setCurrentTab(tab)}
-        upcomingAppointmentToday={upcomingAppointmentToday}
-        pendingDoseCount={pendingDoseCount}
-        pendingTodosCount={pendingTodosCount}
-        forceMobileView={isMobileSim}
-      />
     </div>
   );
 
   return (
     <div
       data-theme={settings.themeColor}
+      data-mobile-view={isMobileSim ? 'true' : 'false'}
       className={`min-h-screen ${
         isMobileSim
           ? 'bg-slate-900/90 py-0 sm:py-6 px-0 sm:px-4 flex flex-col items-center justify-start transition-colors duration-300'
@@ -673,10 +734,10 @@ export default function App() {
       {isMobileSim ? (
         <>
           {/* Top Banner on Desktop previewing mobile mode */}
-          <div className="hidden sm:flex items-center justify-between w-full max-w-md mb-2 px-3 text-slate-300 text-xs">
+          <div className="hidden sm:flex items-center justify-between w-full max-w-[480px] mb-2 px-3 text-slate-300 text-xs">
             <span className="flex items-center gap-1.5 font-bold text-teal-400">
               <Smartphone className="w-4 h-4" />
-              <span>手機版閱讀模式（已加大字體與觸控區）</span>
+              <span>手機版閱讀模式（版面完美適配 · 字體最大化）</span>
             </span>
             <button
               type="button"
@@ -690,8 +751,8 @@ export default function App() {
             </button>
           </div>
 
-          {/* Centered Phone Shell */}
-          <div className="w-full max-w-md bg-slate-50 min-h-screen sm:min-h-[840px] sm:max-h-[92vh] sm:rounded-3xl shadow-2xl sm:border-[6px] sm:border-slate-800 flex flex-col overflow-y-auto relative">
+          {/* Centered Phone Shell - Fits mobile screen perfectly */}
+          <div className="w-full max-w-[480px] bg-slate-50 min-h-screen sm:min-h-[860px] sm:max-h-[96vh] sm:rounded-3xl shadow-2xl sm:border-[6px] sm:border-slate-800 flex flex-col overflow-y-auto overflow-x-hidden relative">
             {contentJsx}
           </div>
         </>
@@ -715,15 +776,15 @@ export default function App() {
         activeMedications={medications.filter((m) => m.isActive)}
         onAddAppointment={(app) => {
           handleSaveAppointment(app);
-          setCurrentTab('appointments');
+          handleNavigateTab('appointments');
         }}
         onAddMedication={(med) => {
           handleSaveMedication(med);
-          setCurrentTab('medications');
+          handleNavigateTab('medications');
         }}
         onAddTodo={(todo) => {
           handleSaveTodo(todo);
-          setCurrentTab('todos');
+          handleNavigateTab('todos');
         }}
         onShowToast={showToast}
       />

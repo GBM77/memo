@@ -20,6 +20,9 @@ import {
   Play,
   Vibrate,
   Sliders,
+  Monitor,
+  ExternalLink,
+  Copy,
 } from 'lucide-react';
 import {
   AppSettings,
@@ -28,6 +31,7 @@ import {
   ThemeColor,
   LayoutStyle,
   RingtoneType,
+  DefaultPageSetting,
 } from '../../types';
 import {
   exportBackupJSON,
@@ -257,6 +261,209 @@ export function SettingsView({
         <div className="p-3 bg-slate-50 rounded-xl text-xs text-slate-600 space-y-1">
           <p>
             📱 <b>功能特色</b>：開啟後在電腦或平板上將自動約束至舒適的手機單欄比例（480px 寬度並居中），底部常駐手機導航條，不用在大螢幕上頻繁大幅度移滑鼠。
+          </p>
+        </div>
+      </div>
+
+      {/* 2.1 長輩專用版模式 (簡單易懂好操作) */}
+      <div className="bg-amber-50/70 p-4 sm:p-5 rounded-2xl border-2 border-amber-400 shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center text-xl font-bold shrink-0 shadow-2xs">
+              👵
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-black text-amber-950">
+                  長輩專用版模式（簡單易懂好操作）
+                </h3>
+                <span className="text-[10px] bg-red-500 text-white font-bold px-1.5 py-0.2 rounded-md">
+                  長輩推薦
+                </span>
+              </div>
+              <p className="text-xs text-amber-800 mt-0.5">
+                超大字體 · 超大觸控按鈕 · 親切語音朗讀 · 一鍵撥打兒女診所電話
+              </p>
+            </div>
+          </div>
+
+          <label className="relative inline-flex items-center cursor-pointer shrink-0">
+            <input
+              type="checkbox"
+              checked={settings.isSeniorMode}
+              onChange={(e) => {
+                const nextVal = e.target.checked;
+                onUpdateSettings({
+                  ...settings,
+                  isSeniorMode: nextVal,
+                  fontSize: nextVal ? 'extraLarge' : settings.fontSize,
+                });
+                onShowToast(nextVal ? '👵 已切換為長輩專用版！' : '✓ 已切換回一般完整版！');
+              }}
+              className="sr-only peer"
+            />
+            <div className="w-12 h-7 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-amber-600"></div>
+          </label>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-amber-950">
+          <div className="p-3 bg-white/90 rounded-xl border border-amber-200 space-y-1">
+            <div className="font-bold flex items-center gap-1 text-amber-900">
+              <span>🔤</span>
+              <span>特大字體與超清晰色塊</span>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              字體放大至最高清晰度，標題與時間皆顯眼突出，不戴老花眼鏡也能輕鬆看懂。
+            </p>
+          </div>
+
+          <div className="p-3 bg-white/90 rounded-xl border border-amber-200 space-y-1">
+            <div className="font-bold flex items-center gap-1 text-amber-900">
+              <span>👆</span>
+              <span>巨型防呆打卡按鈕</span>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              按鈕加大至手掌指尖一觸即發，點擊後大綠勾鎖定，絕不重複服藥、不漏吃。
+            </p>
+          </div>
+
+          <div className="p-3 bg-white/90 rounded-xl border border-amber-200 space-y-1">
+            <div className="font-bold flex items-center gap-1 text-amber-900">
+              <span>🔊</span>
+              <span>親切語音朗讀提醒</span>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              按下「唸給我聽」，自動以繁體中文語音清晰朗讀今天該吃什麼藥、幾點要出門看病。
+            </p>
+          </div>
+
+          <div className="p-3 bg-white/90 rounded-xl border border-amber-200 space-y-1">
+            <div className="font-bold flex items-center gap-1 text-amber-900">
+              <span>📞</span>
+              <span>兒女與常看診所一鍵撥號</span>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              將家人兒女與常看診所電話做成巨大按鈕，直接點擊即刻撥出，免翻通訊錄。
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              onUpdateSettings({
+                ...settings,
+                isSeniorMode: true,
+                fontSize: 'extraLarge',
+              });
+              onShowToast('👵 已切換為長輩專用版！');
+              window.location.hash = 'home';
+            }}
+            className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-sm shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+          >
+            <span>👉 立即啟用並前往「長輩專用版」首頁</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2.5 電腦版獨立分頁與跳轉設定 (REQUEST 2.5) */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <div className="flex items-center gap-2">
+          <Monitor className="w-5 h-5 text-teal-600" />
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">
+              電腦版獨立頁面與快速跳轉設定
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              電腦版支援直接跳轉獨立頁面、專屬網址、書籤儲存及鍵盤數字 [1~5] 快捷鍵
+            </p>
+          </div>
+        </div>
+
+        {/* Default Landing Page */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-2">
+            打開 App 時預設啟動之獨立頁面：
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {[
+              { id: 'home', label: '首頁', desc: '最該做的一件事' },
+              { id: 'appointments', label: '就診頁面', desc: '預約與出發時間軸' },
+              { id: 'medications', label: '服藥頁面', desc: '打卡與藥品庫存' },
+              { id: 'todos', label: '瑣事頁面', desc: '家務採買與繳費' },
+              { id: 'settings', label: '設定頁面', desc: '系統自訂配置' },
+            ].map((p) => {
+              const isSelected = (settings.defaultLandingPage || 'home') === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    updateSettingField('defaultLandingPage', p.id as DefaultPageSetting);
+                    onShowToast(`✓ 已設定預設開啟「${p.label}」！`);
+                  }}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-teal-600 bg-teal-50/80 font-bold text-teal-950 ring-2 ring-teal-500/20'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <div className="text-xs font-bold">{p.label}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5 leading-snug">{p.desc}</div>
+                  {isSelected && (
+                    <div className="text-[10px] text-teal-700 font-bold mt-1">目前預設</div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Independent Page Direct Links */}
+        <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+          <div className="font-bold text-slate-800 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <ExternalLink className="w-3.5 h-3.5 text-teal-600" />
+              <span>各模組獨立分頁專屬網址（支援直接分享或加入瀏覽器我的最愛）：</span>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            {[
+              { tab: 'home', name: '首頁', path: '#home' },
+              { tab: 'appointments', name: '就診行程獨立頁', path: '#appointments' },
+              { tab: 'medications', name: '服藥專區獨立頁', path: '#medications' },
+              { tab: 'todos', name: '日常瑣事獨立頁', path: '#todos' },
+            ].map((item) => (
+              <div
+                key={item.tab}
+                className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold text-slate-900 truncate">{item.name}</span>
+                  <code className="text-[10px] font-mono text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded border border-teal-100">
+                    {item.path}
+                  </code>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const fullUrl = `${window.location.origin}${window.location.pathname}${item.path}`;
+                    navigator.clipboard.writeText(fullUrl).then(() => {
+                      onShowToast(`✓ 已複製「${item.name}」獨立網址！`);
+                    });
+                  }}
+                  className="flex items-center gap-1 text-[11px] font-bold text-teal-700 hover:text-teal-900 px-2 py-1 rounded hover:bg-teal-50 transition-colors"
+                >
+                  <Copy className="w-3 h-3" />
+                  <span>複製</span>
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-slate-500 pt-1">
+            💡 提示：在電腦版任何畫面，直接按下鍵盤數字鍵 <b>[1] 首頁</b>、<b>[2] 就診</b>、<b>[3] 服藥</b>、<b>[4] 瑣事</b>、<b>[5] 設定</b> 即可秒速跳轉！
           </p>
         </div>
       </div>

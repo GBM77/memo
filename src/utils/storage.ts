@@ -17,10 +17,12 @@ const STORAGE_KEYS = {
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
+  isSeniorMode: false,
   fontSize: 'standard',
   themeColor: 'teal',
   layoutStyle: 'standard',
   forceMobileView: false,
+  defaultLandingPage: 'home',
   alarm: {
     enabled: true,
     ringtone: 'gentleChime',

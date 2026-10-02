@@ -59,8 +59,34 @@ export function Header({
 
   const handleToggleMobileView = () => {
     const nextState = !settings.forceMobileView;
-    onUpdateSettings({ ...settings, forceMobileView: nextState });
-    if (onShowToast) onShowToast(nextState ? '✓ 已啟用手機版閱讀模式（居中大字）！' : '✓ 已恢復自適應寬版！');
+    onUpdateSettings({
+      ...settings,
+      forceMobileView: nextState,
+      fontSize: nextState ? 'extraLarge' : settings.fontSize,
+    });
+    if (onShowToast) {
+      onShowToast(
+        nextState
+          ? '📱 已切換為手機版：版面完美適配，字體已自動放大至最大！'
+          : '✓ 已恢復自適應寬版！'
+      );
+    }
+  };
+
+  const handleToggleSeniorMode = () => {
+    const nextState = !settings.isSeniorMode;
+    onUpdateSettings({
+      ...settings,
+      isSeniorMode: nextState,
+      fontSize: nextState ? 'extraLarge' : settings.fontSize,
+    });
+    if (onShowToast) {
+      onShowToast(
+        nextState
+          ? '👵 已切換為長輩專用版（超大字體、超大觸控按鈕、親切語音朗讀）！'
+          : '✓ 已切換回一般完整版模式！'
+      );
+    }
   };
 
   const getFontSizeLabel = () => {
@@ -89,7 +115,12 @@ export function Header({
               <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-none truncate">
                 安時備忘
               </h1>
-              {settings.forceMobileView && (
+              {settings.isSeniorMode && (
+                <span className="text-[10px] font-black text-amber-950 bg-amber-300 px-2 py-0.5 rounded-md border border-amber-400">
+                  👵 長輩版
+                </span>
+              )}
+              {settings.forceMobileView && !settings.isSeniorMode && (
                 <span className="text-[10px] font-bold text-teal-800 bg-teal-100 px-1.5 py-0.2 rounded hidden sm:inline-block">
                   📱 手機模式
                 </span>
@@ -111,6 +142,21 @@ export function Header({
 
         {/* Quick action buttons */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          {/* Quick Toggle Senior Mode (長輩專用版) */}
+          <button
+            type="button"
+            onClick={handleToggleSeniorMode}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black shadow-xs transition-all cursor-pointer ${
+              settings.isSeniorMode
+                ? 'bg-amber-400 hover:bg-amber-500 text-slate-950 border-2 border-amber-500 ring-2 ring-amber-400/30'
+                : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300'
+            }`}
+            title={settings.isSeniorMode ? '點擊切換回一般完整版' : '切換為長輩專用版（大字體、大按鈕、親切語音、簡單清楚）'}
+          >
+            <span>👵</span>
+            <span>{settings.isSeniorMode ? '一般版' : '長輩版'}</span>
+          </button>
+
           {/* AI Scan button */}
           {onOpenScanModal && (
             <button

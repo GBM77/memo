@@ -17,6 +17,7 @@ import {
   AppSettings,
 } from '../../types';
 import { HeroAction } from '../HeroAction';
+import { ImportantReminders } from './ImportantReminders';
 import { TodayMedsStatusCard } from '../TodayMedsStatusCard';
 import { DoseSlotCard } from '../medications/DoseSlotCard';
 import { AppointmentCard } from '../appointments/AppointmentCard';
@@ -101,6 +102,21 @@ export function HomeView({
           onCreateAppointmentDraft={onCreateAppointmentDraft}
         />
       )}
+
+      {/* 每天 和 每週 的重要小提醒 (簡單清楚) */}
+      <ImportantReminders
+        now={now}
+        appointments={appointments}
+        medications={medications}
+        doseLogs={doseLogs}
+        todos={todos}
+        settings={settings}
+        onNavigateToTab={onNavigateToTab}
+        onSelectAppointment={onSelectAppointment}
+        onCreateAppointmentDraft={onCreateAppointmentDraft}
+        onToggleTodo={onToggleTodo}
+        onShowToast={onShowToast}
+      />
 
       {/* AI Smart Scan Quick Banner */}
       {onOpenScanModal && (
